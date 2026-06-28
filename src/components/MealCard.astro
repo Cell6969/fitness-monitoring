@@ -1,0 +1,135 @@
+---
+import { mealPlans } from '../data/meals';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const CYCLE_DAYS = 14; // 2-week rotation
+
+const dayIndexForDate = (d = new Date()) => {
+    // use UTC date to avoid timezone shifts
+    const utc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    const days = Math.floor(utc / MS_PER_DAY);
+    return days % CYCLE_DAYS;
+}
+
+const caloriesOf = (item:any) => {
+    if (!item || !item.calories) return 0;
+    return item.calories.withoutRice ?? item.calories.withRice ?? 0;
+}
+
+const caloriesText = (item:any) => {
+    if (!item || !item.calories) return '0 kcal';
+    const withoutRice = item.calories.withoutRice;
+    const withRice = item.calories.withRice;
+    if (withRice != null && withoutRice != null && withRice !== withoutRice) {
+        return `${withoutRice} kcal / ${withRice} kcal dengan nasi`;
+    }
+    return `${withoutRice ?? withRice ?? 0} kcal`;
+}
+
+const totalCalories = (items = []) => items.reduce((s, i) => s + caloriesOf(i), 0);
+
+const totalCaloriesWithRice = (items = []) => {
+    const values = items.map(i => i?.calories?.withRice).filter(v => typeof v === 'number');
+    if (values.length !== items.length) return null;
+    return values.reduce((s, v) => s + v, 0);
+};
+---
+
+<section id="meals" aria-labelledby="meals-title">
+    <h2 id="meals-title">This Week's Menu</h2>
+    <div class="week-grid">
+        {(() => {
+            const dayIndex = dayIndexForDate(); // 0..13
+            const plans = Array.isArray(mealPlans) ? mealPlans : [];
+            const today = new Date();
+            const fmt = new Intl.DateTimeFormat('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+            const cards = [];
+            for (let i = 0; i < 7; i++) {
+                const dateUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+                dateUtc.setUTCDate(dateUtc.getUTCDate() + i);
+                const label = fmt.format(dateUtc); // e.g., 'Sen, 28 Jun'
+                const planDayNumber = ((dayIndex + i) % CYCLE_DAYS) + 1; // 1..14
+                const plan = plans.find(p => p.day === planDayNumber);
+                cards.push({ label, plan, planDayNumber });
+            }
+
+            if (cards.length === 0) return (<p class="empty">No meal plans available.</p>);
+
+            return cards.map(c => (
+                <article class="day-card" aria-labelledby={`day-${c.planDayNumber}`}>
+                    <h3 id={`day-${c.planDayNumber}`}>{c.label}</h3>
+                    {c.plan ? (
+                        <>
+                            <p class="day-total">Total tanpa nasi: {totalCalories([c.plan.breakfast, c.plan.lunch, c.plan.dinner, c.plan.snack])} kcal</p>
+                            {totalCaloriesWithRice([c.plan.breakfast, c.plan.lunch, c.plan.dinner, c.plan.snack]) != null ? (
+                                <p class="day-subtotal">Total dengan nasi: {totalCaloriesWithRice([c.plan.breakfast, c.plan.lunch, c.plan.dinner, c.plan.snack])} kcal</p>
+                            ) : null}
+                            <dl>
+                            <dt>Breakfast</dt>
+                            <dd>
+                                <span class="name">{c.plan.breakfast.name}</span>
+                                <span class="cal">{caloriesText(c.plan.breakfast)}</span>
+                            </dd>
+
+                            <dt>Lunch</dt>
+                            <dd>
+                                <span class="name">{c.plan.lunch.name}</span>
+                                <span class="cal">{caloriesText(c.plan.lunch)}</span>
+                            </dd>
+
+                            <dt>Dinner</dt>
+                            <dd>
+                                <span class="name">{c.plan.dinner.name}</span>
+                                <span class="cal">{caloriesText(c.plan.dinner)}</span>
+                            </dd>
+
+                            <dt>Snack</dt>
+                            <dd>
+                                <span class="name">{c.plan.snack.name}</span>
+                                <span class="cal">{caloriesText(c.plan.snack)}</span>
+                            </dd>
+                        </dl>
+                        </>
+                    ) : (
+                        <p class="empty">No plan for day {c.planDayNumber}</p>
+                    )}
+                                </article>
+            ));
+        })()}
+    </div>
+</section>
+
+<script>
+// Client-side: reveal animation for cards on scroll
+(() => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.style.scrollBehavior = 'smooth';
+    const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+            if (e.isIntersecting) e.target.classList.add('in-view');
+        }
+    }, { threshold: 0.12 });
+    for (const el of document.querySelectorAll('.day-card')) io.observe(el);
+})();
+</script>
+
+<style>
+    #meals {max-width:1200px;margin:24px auto;padding:0 16px}
+    #meals h2{color:#b91c1c}
+    .week-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .day-card{background:white;border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);opacity:0;transform:translateY(8px);transition:opacity 320ms ease, transform 320ms ease}
+    .day-card.in-view{opacity:1;transform:none}
+    .day-card h3{margin:0 0 8px}
+    .day-total{font-weight:700;margin:6px 0 2px;color:#111827}
+    .day-subtotal{margin:0 0 8px;color:#6b7280}
+    dl{margin:0}
+    dt{font-weight:600;margin-top:8px;color:#374151}
+    dd{display:flex;justify-content:space-between;margin:6px 0;padding-bottom:6px;border-bottom:1px dashed #f3f4f6}
+    dd:last-of-type{border-bottom:none}
+    .name{color:#111827}
+    .cal{color:#6b7280}
+
+    @media (max-width: 1100px){.week-grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 700px){.week-grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 420px){.week-grid{grid-template-columns:1fr}}
+</style>

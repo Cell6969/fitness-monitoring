@@ -1,0 +1,18 @@
+---
+import { tips } from '../data/tips';
+---
+
+<section id="tips" aria-labelledby="tips-title">
+	<h2 id="tips-title">Healthy Tips</h2>
+	<ul class="tips">
+		{tips.map((t, i) => (
+			<li>{t}</li>
+		))}
+	</ul>
+</section>
+
+<style>
+	#tips{max-width:900px;margin:24px auto;padding:0 16px}
+	.tips{display:grid;gap:8px;list-style:none;padding:0}
+	.tips li{background:white;padding:12px;border-radius:10px;box-shadow:0 6px 12px rgba(0,0,0,0.04)}
+</style>
