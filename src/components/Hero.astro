@@ -1,11 +1,16 @@
 ---
+const isSignedIn = Boolean(Astro.cookies.get("SB_ACCESS_TOKEN")?.value);
+const trackerHref = isSignedIn ? "/weight-tracker" : "/signin?redirect=/weight-tracker";
 ---
 
 <section id="hero" aria-labelledby="hero-title">
 	<div class="inner">
 		<h1 id="hero-title">Healthy Diet Guide</h1>
 		<p>Simple daily meal recommendations and healthy activities.</p>
-		<a class="cta" href="#meals">View Today's Menu</a>
+		<div class="cta-group">
+			<a class="cta" href="#meals">View Today's Menu</a>
+			<a class="cta secondary" href={trackerHref}>Track Weight</a>
+		</div>
 	</div>
 </section>
 
@@ -21,5 +26,7 @@
 	}
 	#hero h1{margin:0 0 8px;font-size:28px;color:#b91c1c}
 	#hero p{margin:0 0 16px;color:#7f1d1d}
-	#hero .cta{display:inline-block;padding:10px 16px;border-radius:10px;background:#fb7185;color:white;text-decoration:none}
+	.cta-group{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+	#hero .cta{display:inline-block;padding:10px 16px;border-radius:10px;background:#fb7185;color:white;text-decoration:none;font-weight:600}
+	#hero .cta.secondary{background:white;color:#be123c;border:1px solid rgba(190,18,60,0.2)}
 </style>

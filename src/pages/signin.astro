@@ -1,0 +1,110 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+
+const redirectTo = Astro.url.searchParams.get("redirect") || "/";
+const toastMessage = Astro.url.searchParams.get("toast");
+const toastType = Astro.url.searchParams.get("toastType") || "error";
+---
+
+<Layout title="Sign In">
+  <section class="signin-page">
+    <div class="signin-card">
+      <p class="eyebrow">Welcome back</p>
+      <h1>Sign in to your account</h1>
+      <form action="/api/auth/signin" method="post" class="signin-form">
+        <input type="hidden" name="redirect" value={redirectTo} />
+        <label for="email">Email</label>
+        <input
+          type="email"
+          name="email"
+          id="email"
+          placeholder="you@example.com"
+          required
+        />
+        <label for="password">Password</label>
+        <input
+          type="password"
+          name="password"
+          id="password"
+          placeholder="Enter your password"
+          required
+        />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </section>
+</Layout>
+
+<script is:inline>
+  const params = new URLSearchParams(window.location.search);
+  const message = params.get('toast');
+  if (message) {
+    window.showToast(decodeURIComponent(message), params.get('toastType') || 'error');
+  }
+</script>
+
+<style>
+  .signin-page {
+    min-height: 70vh;
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+  }
+  .signin-card {
+    width: min(100%, 420px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 16px 40px rgba(88, 21, 28, 0.12);
+  }
+  .eyebrow {
+    margin: 0 0 8px;
+    color: var(--primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 1.75rem;
+  }
+  .subtext {
+    margin: 0 0 20px;
+    color: var(--muted);
+  }
+  .signin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  label {
+    font-weight: 600;
+  }
+  input {
+    padding: 12px 14px;
+    border: 1px solid rgba(88, 21, 28, 0.14);
+    border-radius: 12px;
+    font: inherit;
+  }
+  input:focus {
+    outline: 2px solid rgba(251, 113, 133, 0.24);
+    border-color: var(--primary);
+  }
+  button {
+    margin-top: 8px;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button:hover {
+    opacity: 0.92;
+  }
+</style>
